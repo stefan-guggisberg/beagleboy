@@ -10,7 +10,8 @@
       <button id="generate" disabled>Generate</button>
     </div>
     <hr>
-    <div id="result"></div>
+    <div id="output">
+    </div>
     
     <script src="qrcode.min.js"></script>
 
@@ -30,9 +31,9 @@
 
       function loadImage(url, cb) {
         const img = new Image();
-        img.crossOrigin = 'Anonymous';
+        //img.crossOrigin = ''; 
         img.onerror = function () {
-          cb(`failed to load ${this.src}`);
+          cb(new Error(`failed to load ${this.src}`));
         }
         img.onload = function () {
           cb(null, this);
@@ -45,6 +46,7 @@
         const clipId = validateUrl();
         const clipUrl = document.getElementById('url').value;
         //const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/0.jpg`;
+        //const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/default.jpg`;
         //const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/mqdefault.jpg`;
         //const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/hqdefault.jpg`;
         const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/maxresdefault.jpg`;
@@ -52,15 +54,15 @@
         // load thumbnail
         loadImage(thumbnailUrl, (err, thmbImg) => {
           if (err) {
-            return console.error(err);
+            return console.log(err);
           }
           // load qr template
           loadImage('qr_template.png', (err, tmplImg) => {
             if (err) {
-              return console.error(err);
+              return console.log(err);
             }
             // generate QR code
-            QRCode.toCanvas(
+            QRCode.toDataURL(
               clipUrl, 
               {
                 errorCorrectionLevel: 'L',
@@ -73,37 +75,33 @@
                   //ligth: '#0000' // Transparent background
                 }
               },
-              (err, canvas) => {
+              (err, dataUrl) => {
                 if (err) {
-                  return console.error(err);
+                  return console.log(err);
                 }
-                let qrImgData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-
-                const qrCanvas = document.createElement('canvas');
-                let ctx = qrCanvas.getContext('2d');
-                // render template
-                ctx.drawImage(tmplImg, 0, 0);
-                // render qr code
-                const center = { x: 104, y: 300 };
-                ctx.putImageData(qrImgData, center.x - qrImgData.width / 2, center.y - qrImgData.height / 2); 
-                //ctx.putImageData(qrImgData, 24, 220); 
-                qrImgData = qrCanvas.getContext('2d').getImageData(0, 0, qrCanvas.width, qrCanvas.height);
- 
-                const resultCanvas = document.createElement('canvas');
-                ctx = resultCanvas.getContext('2d');
-                // render thumbnail
-                ctx.drawImage(thmbImg, 0, 0);
-                // render qr code over thumbnail
-                ctx.putImageData(qrImgData, 20, resultCanvas.height / 2 - qrImgData.height / 2); 
-
-                document.getElementById('result').appendChild(resultCanvas);
+                loadImage(dataUrl, (err, qrImg) => {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = thmbImg.width;
+                  canvas.height = thmbImg.height;
+                  const ctx = canvas.getContext('2d');
+                  // render thumbnail
+                  ctx.drawImage(thmbImg, 0, 0);
+                  // render QR code template
+                  let x = 20;
+                  let y = canvas.height / 2 - tmplImg.height / 2;
+                  ctx.drawImage(tmplImg, x, y);
+                  // render QR code
+                  x += (tmplImg.width / 2 - qrImg.width / 2);
+                  y += 220; 
+                  ctx.drawImage(qrImg, x, y);
+                  document.getElementById('output').appendChild(canvas);
+                });
               }
             );
-
           });
         });
-
       }
+
     </script>
   </body>
 </html>
