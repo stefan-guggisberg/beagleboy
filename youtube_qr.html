@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head lang="en">
+    <meta charset="UTF-8">
+    <title>Generate QR Code</title>
+  </head>
+  <body>
+    <div>
+      YouTube Clip Url: <input type="url" id="url" size="80" pattern="https?://.+" onchange="renderResult()" oninput="validateUrl()" required/>
+      <button id="generate" disabled>Generate</button>
+    </div>
+    <hr>
+    <div id="result"></div>
+    
+    <script src="qrcode.min.js"></script>
+
+    <script>
+
+      function validateUrl() {
+        const url = document.getElementById('url').value;
+        // validate youtube url
+        const re = /.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=)([^#\&\?]*).*/;
+        const match = url.match(re);
+        const id = (match && match[1].length==11)? match[1] : undefined;
+        // enable/disable button
+        document.getElementById('generate').disabled = !id;
+        // return extracted id of youtube clip 
+        return id;
+      }
+
+      function loadImage(url, cb) {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onerror = function () {
+          cb(`failed to load ${this.src}`);
+        }
+        img.onload = function () {
+          cb(null, this);
+        };
+        img.src = url;
+      }
+
+      function renderResult() {
+        // validate/parse/generate url
+        const clipId = validateUrl();
+        const clipUrl = document.getElementById('url').value;
+        //const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/0.jpg`;
+        //const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/mqdefault.jpg`;
+        //const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/hqdefault.jpg`;
+        const thumbnailUrl = `https://img.youtube.com/vi/${clipId}/maxresdefault.jpg`;
+
+        // load thumbnail
+        loadImage(thumbnailUrl, (err, thmbImg) => {
+          if (err) {
+            return console.error(err);
+          }
+          // load qr template
+          loadImage('qr_template.png', (err, tmplImg) => {
+            if (err) {
+              return console.error(err);
+            }
+            // generate QR code
+            QRCode.toCanvas(
+              clipUrl, 
+              {
+                errorCorrectionLevel: 'L',
+                //margin: 2,
+                //scale: 2,
+                width: 160,
+                color: {
+                  dark: '#000000ff',
+                  ligth: '#ffffffff'
+                  //ligth: '#0000' // Transparent background
+                }
+              },
+              (err, canvas) => {
+                if (err) {
+                  return console.error(err);
+                }
+                let qrImgData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+
+                const qrCanvas = document.createElement('canvas');
+                let ctx = qrCanvas.getContext('2d');
+                // render template
+                ctx.drawImage(tmplImg, 0, 0);
+                // render qr code
+                const center = { x: 104, y: 300 };
+                ctx.putImageData(qrImgData, center.x - qrImgData.width / 2, center.y - qrImgData.height / 2); 
+                //ctx.putImageData(qrImgData, 24, 220); 
+                qrImgData = qrCanvas.getContext('2d').getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+ 
+                const resultCanvas = document.createElement('canvas');
+                ctx = resultCanvas.getContext('2d');
+                // render thumbnail
+                ctx.drawImage(thmbImg, 0, 0);
+                // render qr code over thumbnail
+                ctx.putImageData(qrImgData, 20, resultCanvas.height / 2 - qrImgData.height / 2); 
+
+                document.getElementById('result').appendChild(resultCanvas);
+              }
+            );
+
+          });
+        });
+
+      }
+    </script>
+  </body>
+</html>
