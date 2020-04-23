@@ -94,7 +94,9 @@
                   x += (tmplImg.width / 2 - qrImg.width / 2);
                   y += 220; 
                   ctx.drawImage(qrImg, x, y);
-                  document.getElementById('output').appendChild(canvas);
+                  const div = document.getElementById('output');
+                  div.innerHTML = '';
+                  div.appendChild(canvas);
                 });
               }
             );
