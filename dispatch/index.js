@@ -15,7 +15,7 @@ const ORIGIN = 'beagleboy--stefan-guggisberg.hlx.page';
 const ORIGIN_MAP = new Map([
   [ 'beagleboy.org', ORIGIN ],
   [ 'www.beagleboy.org', ORIGIN ],
-  [ 'stage.beagleboy.org', `stage.${ORIGIN}` ],
+  [ 'stage.beagleboy.org', `stage--${ORIGIN}` ],
 ]);
 
 async function fetchResponse(event) {
