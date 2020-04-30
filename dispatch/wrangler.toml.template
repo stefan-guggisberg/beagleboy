@@ -1,0 +1,6 @@
+name = "dispatch"
+type = "javascript"
+account_id = "<cloudflare account id>"
+workers_dev = false
+route = "*beagleboy.org/*"
+zone_id = "<cloudflare zone id>"
