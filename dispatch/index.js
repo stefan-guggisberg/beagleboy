@@ -38,17 +38,22 @@ async function fetchResponse(event) {
 }
 
 async function handleRequest(event) {
-  if (event.request.method === 'GET') {
-    let response = await fetchResponse(event);
-    if (response.status > 399) {
-      response = new Response(response.statusText, { status: response.status });
+  try {
+    if (event.request.method === 'GET') {
+      let response = await fetchResponse(event);
+      if (response.status > 399) {
+        response = new Response(response.statusText, { status: response.status });
+      }
+      return response;
+    } else {
+      return new Response('Method not allowed', { status: 405 });
     }
-    return response;
-  } else {
-    return new Response('Method not allowed', { status: 405 });
+  } catch (err) {
+    return new Response(err.stack || err);
   }
 }
 
 addEventListener('fetch', event => {
+  //event.passThroughOnException(); // go to origin on exception
   event.respondWith(handleRequest(event))
 });
